@@ -4,13 +4,12 @@ pragma solidity ^0.8.10;
 import "forge-std/Test.sol";
 import "../src/contracts/PurchaseToken.sol";
 import "../src/interfaces/ITicketNFT.sol";
+import "../src/interfaces/IPrimaryMarket.sol";
 import "../src/contracts/PrimaryMarket.sol";
 import "../src/contracts/TicketNFT.sol";
 //import "../src/contracts/SecondaryMarket.sol";
 
 contract EndToEnd is Test {
-	/* This section is to be deleted before submission, as the interface 
-	already has these events, so there is no need to add them here*/
     event EventCreated(
         address indexed creator,
         address indexed ticketCollection,
@@ -18,7 +17,7 @@ contract EndToEnd is Test {
         uint256 price,
         uint256 maxNumberOfTickets
     );
-	/* End of Section to be Deleted */
+
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
     //SecondaryMarket public secondaryMarket;
@@ -40,14 +39,15 @@ contract EndToEnd is Test {
 		string memory eventName = "sampleEvent";
 		uint256 ticketPrice = 20;
 		uint256 maxTickets = 30;
-		
+		TicketNFT ticketCollection;
 		vm.prank(alice);
-		TicketNFT ticketCollection = primaryMarket.createNewEvent(
+		// address of collection not checked as it was not created yet
+		vm.expectEmit(true, false, false, true); 
+		emit EventCreated(alice, address(ticketCollection), eventName, ticketPrice, maxTickets);
+		ticketCollection = primaryMarket.createNewEvent(
 			eventName, ticketPrice, maxTickets
 		);
 
-		vm.expectEmit(true, true, false, true);
-		emit EventCreated(alice, address(ticketCollection), eventName, ticketPrice, maxTickets);
 		assertEq(ticketCollection.creator(), alice);
 		assertEq(ticketCollection.getCollectionName(), "sampleEvent");
 		assertEq(ticketCollection.maxNumberOfTickets(), 30);
