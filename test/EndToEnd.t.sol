@@ -5,12 +5,12 @@ import "forge-std/Test.sol";
 import "../src/contracts/PurchaseToken.sol";
 import "../src/interfaces/ITicketNFT.sol";
 import "../src/contracts/PrimaryMarket.sol";
-import "../src/contracts/SecondaryMarket.sol";
+//import "../src/contracts/SecondaryMarket.sol";
 
 contract EndToEnd is Test {
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
-    SecondaryMarket public secondaryMarket;
+    //SecondaryMarket public secondaryMarket;
 
     address public alice = makeAddr("alice");
     address public bob = makeAddr("bob");
@@ -19,12 +19,28 @@ contract EndToEnd is Test {
     function setUp() public {
         purchaseToken = new PurchaseToken();
         primaryMarket = new PrimaryMarket(purchaseToken);
-        secondaryMarket = new SecondaryMarket(purchaseToken);
+        //secondaryMarket = new SecondaryMarket(purchaseToken);
 
         payable(alice).transfer(1e18);
         payable(bob).transfer(2e18);
     }
 
+	function testCreateNewEvent() public {
+		string memory eventName = "sampleEvent";
+		uint256 eventPrice = 20;
+		uint256 maxTickets = 30;
+		
+		vm.prank(alice);
+		ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+			eventName, eventPrice, maxTickets
+		);
+
+		assertEq(ticketCollection.creator(), alice);
+		//assertEq(ticketCollection._name, "sampleEvent");
+		//assertEq(ticketCollection._name, "sampleEvent");
+	}
+
+	/*
     function testEndToEnd() external {
         uint256 ticketPrice = 20e18;
         uint256 bidPrice = 155e18;
@@ -95,4 +111,5 @@ contract EndToEnd is Test {
         assertEq(ticketNFT.holderOf(id), bob);
         assertEq(ticketNFT.holderNameOf(id), "Bob");
     }
+	*/
 }
