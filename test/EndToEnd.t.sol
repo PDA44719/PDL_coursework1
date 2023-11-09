@@ -9,6 +9,16 @@ import "../src/contracts/TicketNFT.sol";
 //import "../src/contracts/SecondaryMarket.sol";
 
 contract EndToEnd is Test {
+	/* This section is to be deleted before submission, as the interface 
+	already has these events, so there is no need to add them here*/
+    event EventCreated(
+        address indexed creator,
+        address indexed ticketCollection,
+        string eventName,
+        uint256 price,
+        uint256 maxNumberOfTickets
+    );
+	/* End of Section to be Deleted */
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
     //SecondaryMarket public secondaryMarket;
@@ -26,20 +36,25 @@ contract EndToEnd is Test {
         payable(bob).transfer(2e18);
     }
 
-	function testCreateNewEvent() public {
+	function testCreateNewCollection() public {
 		string memory eventName = "sampleEvent";
-		uint256 eventPrice = 20;
+		uint256 ticketPrice = 20;
 		uint256 maxTickets = 30;
 		
 		vm.prank(alice);
 		TicketNFT ticketCollection = primaryMarket.createNewEvent(
-			eventName, eventPrice, maxTickets
+			eventName, ticketPrice, maxTickets
 		);
 
+		vm.expectEmit(true, true, false, true);
+		emit EventCreated(alice, address(ticketCollection), eventName, ticketPrice, maxTickets);
 		assertEq(ticketCollection.creator(), alice);
-		//assertEq(ticketCollection._name, "sampleEvent");
-		//assertEq(ticketCollection._name, "sampleEvent");
+		assertEq(ticketCollection.getCollectionName(), "sampleEvent");
+		assertEq(ticketCollection.maxNumberOfTickets(), 30);
+		assertEq(primaryMarket.getPrice(address(ticketCollection)), 20);
 	}
+
+	//function test
 
 	/*
     function testEndToEnd() external {

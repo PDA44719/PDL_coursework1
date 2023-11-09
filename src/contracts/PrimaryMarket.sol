@@ -5,7 +5,19 @@ import "../contracts/PurchaseToken.sol";
 import "../contracts/TicketNFT.sol";
 
 contract PrimaryMarket { //is IPrimaryMarket to be added
+	/* This section is to be deleted before submission, as the interface 
+	already has these events, so there is no need to add them here*/
+    event EventCreated(
+        address indexed creator,
+        address indexed ticketCollection,
+        string eventName,
+        uint256 price,
+        uint256 maxNumberOfTickets
+    );
+	/* End of Section to be Deleted */
+
 	PurchaseToken _purchaseToken;
+	mapping(address => uint256) internal priceOfATicket;
 
 	constructor(PurchaseToken purchaseToken){
 		_purchaseToken = purchaseToken;
@@ -34,9 +46,19 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
 		
 		TicketNFT collection = new TicketNFT(
 			eventName,
+			maxNumberOfTickets,
 			msg.sender
 		);
+		priceOfATicket[address(collection)] = price;
+		emit EventCreated(msg.sender, address(collection), eventName, 
+						 price, maxNumberOfTickets);
 		return collection;
 		 
+	}
+
+    function getPrice(
+        address ticketCollection
+    ) external view returns (uint256 price){
+		return priceOfATicket[ticketCollection];
 	}
 }
