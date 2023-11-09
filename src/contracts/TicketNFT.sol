@@ -10,15 +10,15 @@ contract TicketNFT { //is ITicketNFT to be added at the end
 	bool _hasBeenUsed = false;
 	address _creator;
 
+	// string memory currentTicketHolder (to be added as an argument)
 	constructor(
 		string memory name,
-		string memory currentTicketHolder,
-		address creator
+		address collectionCreator
 	) {
 		_name = name;
-		_currentTicketHolder = currentTicketHolder;
+		//_currentTicketHolder = currentTicketHolder;
 		_validUntil = block.timestamp * 864000;
-		_creator = creator;
+		_creator = collectionCreator;
 	}
 
     function creator() external view returns (address){

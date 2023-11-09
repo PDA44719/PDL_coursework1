@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "../src/contracts/PurchaseToken.sol";
 import "../src/interfaces/ITicketNFT.sol";
 import "../src/contracts/PrimaryMarket.sol";
+import "../src/contracts/TicketNFT.sol";
 //import "../src/contracts/SecondaryMarket.sol";
 
 contract EndToEnd is Test {
@@ -31,7 +32,7 @@ contract EndToEnd is Test {
 		uint256 maxTickets = 30;
 		
 		vm.prank(alice);
-		ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+		TicketNFT ticketCollection = primaryMarket.createNewEvent(
 			eventName, eventPrice, maxTickets
 		);
 
