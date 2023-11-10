@@ -49,11 +49,28 @@ contract EndToEnd is Test {
 		);
 
 		assertEq(ticketCollection.creator(), alice);
-		assertEq(ticketCollection.getCollectionName(), "sampleEvent");
+		assertEq(ticketCollection.eventName(), "sampleEvent");
 		assertEq(ticketCollection.maxNumberOfTickets(), 30);
 		assertEq(primaryMarket.getPrice(address(ticketCollection)), 20);
 	}
 
+    function testPurchase() public{
+		string memory eventName = "sampleEvent";
+		uint256 ticketPrice = 1e18;
+		uint256 maxTickets = 30;
+		TicketNFT ticketCollection;
+		vm.prank(alice);
+		ticketCollection = primaryMarket.createNewEvent(
+			eventName, ticketPrice, maxTickets
+		);
+        vm.prank(bob);
+        uint256 id = primaryMarket.purchase(address(ticketCollection), "Robert");
+
+        assertEq(id, 1);
+		assertEq(ticketCollection.holderOf(id), bob);
+		assertEq(ticketCollection.holderNameOf(id), "Robert");
+        
+    }
 	//function test
 
 	/*

@@ -61,4 +61,14 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
     ) external view returns (uint256 price){
 		return priceOfATicket[ticketCollection];
 	}
+
+    function purchase(
+        address ticketCollection,
+        string memory holderName
+    ) external returns (uint256 id){
+        TicketNFT collection = TicketNFT(ticketCollection);
+        require(collection.getNumberOfMinted() < collection.maxNumberOfTickets());
+        //require(_purchaseToken.balanceOf(msg.sender) >= this.getPrice(ticketCollection));
+        return collection.mint(msg.sender, holderName);
+    }
 }
