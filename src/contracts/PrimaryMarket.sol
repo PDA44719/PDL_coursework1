@@ -14,6 +14,8 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
         uint256 price,
         uint256 maxNumberOfTickets
     );
+
+    event Log(address someone);
 	/* End of Section to be Deleted */
 
 	PurchaseToken _purchaseToken;
@@ -67,8 +69,16 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
         string memory holderName
     ) external returns (uint256 id){
         TicketNFT collection = TicketNFT(ticketCollection);
+        // Check that more tickets can be minted
         require(collection.getNumberOfMinted() < collection.maxNumberOfTickets());
-        //require(_purchaseToken.balanceOf(msg.sender) >= this.getPrice(ticketCollection));
-        return collection.mint(msg.sender, holderName);
+
+        // Check that the buyer has enough funds and has approved the amount
+        require(_purchaseToken.allowance(msg.sender, address(this)) >= priceOfATicket[ticketCollection]);
+        require(_purchaseToken.balanceOf(msg.sender) >= priceOfATicket[ticketCollection]);
+
+        uint256 newTokenID = collection.mint(msg.sender, holderName);
+        emit Log(msg.sender);
+        _purchaseToken.transferFrom(msg.sender, collection.creator(), priceOfATicket[ticketCollection]);
+        return newTokenID;
     }
 }

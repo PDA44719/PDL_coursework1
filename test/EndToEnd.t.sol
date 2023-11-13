@@ -18,6 +18,14 @@ contract EndToEnd is Test {
         uint256 maxNumberOfTickets
     );
 
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+
+    event Log (uint256 amount);
+
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
     //SecondaryMarket public secondaryMarket;
@@ -56,25 +64,34 @@ contract EndToEnd is Test {
 
     function testSuccessfulPurchase() public{
 		string memory eventName = "sampleEvent";
-		uint256 ticketPrice = 1e18;
+		uint256 ticketPrice = 1e20;
 		uint256 maxTickets = 30;
 		TicketNFT ticketCollection;
-		vm.prank(alice);
+		vm.startPrank(alice);
+        purchaseToken.mint{value: 1e18}(); // This value will be x100
+        emit Log(purchaseToken.balanceOf(alice));
 		ticketCollection = primaryMarket.createNewEvent(
 			eventName, ticketPrice, maxTickets
 		);
-        vm.prank(bob);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 2e18}(); // This value will be x100
+        vm.expectEmit(true, true, true, true);
+        emit Approval(bob, address(primaryMarket), ticketPrice);
+        purchaseToken.approve(address(primaryMarket), ticketPrice);
         uint256 id = primaryMarket.purchase(address(ticketCollection), "Robert");
+        vm.stopPrank();
 
         assertEq(id, 1);
 		assertEq(ticketCollection.holderOf(id), bob);
 		assertEq(ticketCollection.holderNameOf(id), "Robert");
         assertEq(ticketCollection.balanceOf(bob), 1);
-		assertEq(purchaseToken.balanceOf(alice), 2e18);
-        
+		assertEq(purchaseToken.balanceOf(alice), 2e20);
     }
 
-    //function testUnsuccessfulPurchase() public{}
+    //function testPurchaseWithoutAllowance() public{}
+    //function testPurchaseWithoutSufficientFunds() public{}
+    //function testPurchaseOfMoreThanMaxTickets() public{}
 
 	//function test
 

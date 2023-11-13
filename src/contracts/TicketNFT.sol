@@ -52,7 +52,6 @@ contract TicketNFT { //is ITicketNFT to be added at the end
         _balanceOf[holder]++;
         _numberOfMintedTickets++;
         return newTokenID;
-
     }
 
     function balanceOf(address holder) external view returns (uint256 balance){
