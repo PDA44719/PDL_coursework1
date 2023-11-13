@@ -70,11 +70,11 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
     ) external returns (uint256 id){
         TicketNFT collection = TicketNFT(ticketCollection);
         // Check that more tickets can be minted
-        require(collection.getNumberOfMinted() < collection.maxNumberOfTickets());
+        require(collection.getNumberOfMinted() < collection.maxNumberOfTickets(), "No more tickets can be minted");
 
         // Check that the buyer has enough funds and has approved the amount
-        require(_purchaseToken.allowance(msg.sender, address(this)) >= priceOfATicket[ticketCollection]);
-        require(_purchaseToken.balanceOf(msg.sender) >= priceOfATicket[ticketCollection]);
+        require(_purchaseToken.allowance(msg.sender, address(this)) >= priceOfATicket[ticketCollection], "Ticket price was not approved before purchase");
+        require(_purchaseToken.balanceOf(msg.sender) >= priceOfATicket[ticketCollection], "Insufficient funds");
 
         uint256 newTokenID = collection.mint(msg.sender, holderName);
         emit Log(msg.sender);

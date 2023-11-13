@@ -69,7 +69,6 @@ contract EndToEnd is Test {
 		TicketNFT ticketCollection;
 		vm.startPrank(alice);
         purchaseToken.mint{value: 1e18}(); // This value will be x100
-        emit Log(purchaseToken.balanceOf(alice));
 		ticketCollection = primaryMarket.createNewEvent(
 			eventName, ticketPrice, maxTickets
 		);
@@ -89,9 +88,63 @@ contract EndToEnd is Test {
 		assertEq(purchaseToken.balanceOf(alice), 2e20);
     }
 
-    //function testPurchaseWithoutAllowance() public{}
-    //function testPurchaseWithoutSufficientFunds() public{}
-    //function testPurchaseOfMoreThanMaxTickets() public{}
+    function testPurchaseWithoutAllowance() public{
+		string memory eventName = "sampleEvent";
+		uint256 ticketPrice = 1e5;
+		uint256 maxTickets = 1;
+		TicketNFT ticketCollection;
+		vm.startPrank(alice);
+        purchaseToken.mint{value: 1e18}(); // This value will be x100
+		ticketCollection = primaryMarket.createNewEvent(
+			eventName, ticketPrice, maxTickets
+		);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 2e18}(); // This value will be x100
+        vm.expectRevert("Ticket price was not approved before purchase");
+        primaryMarket.purchase(address(ticketCollection), "Robert");
+        vm.stopPrank();
+    }
+
+    function testPurchaseWithInsufficientFunds() public{
+		string memory eventName = "sampleEvent";
+		uint256 ticketPrice = 1e18;
+		uint256 maxTickets = 1;
+		TicketNFT ticketCollection;
+		vm.startPrank(alice);
+        purchaseToken.mint{value: 1e18}(); // This value will be x100
+		ticketCollection = primaryMarket.createNewEvent(
+			eventName, ticketPrice, maxTickets
+		);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 2e10}(); // This value will be x100
+        purchaseToken.approve(address(primaryMarket), ticketPrice);
+        vm.expectRevert("Insufficient funds");
+        primaryMarket.purchase(address(ticketCollection), "Robert");
+        vm.stopPrank();
+    }
+
+    function testPurchaseOfMoreThanMaxTickets() public{
+		string memory eventName = "sampleEvent";
+		uint256 ticketPrice = 1e5;
+		uint256 maxTickets = 1;
+		TicketNFT ticketCollection;
+		vm.startPrank(alice);
+        purchaseToken.mint{value: 1e18}(); // This value will be x100
+		ticketCollection = primaryMarket.createNewEvent(
+			eventName, ticketPrice, maxTickets
+		);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 2e18}(); // This value will be x100
+        purchaseToken.approve(address(primaryMarket), ticketPrice);
+        primaryMarket.purchase(address(ticketCollection), "Robert");
+        purchaseToken.approve(address(primaryMarket), ticketPrice);
+        vm.expectRevert("No more tickets can be minted");
+        primaryMarket.purchase(address(ticketCollection), "Robert");
+        vm.stopPrank();
+    }
 
 	//function test
 
