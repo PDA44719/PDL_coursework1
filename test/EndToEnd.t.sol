@@ -54,7 +54,7 @@ contract EndToEnd is Test {
 		assertEq(primaryMarket.getPrice(address(ticketCollection)), 20);
 	}
 
-    function testPurchase() public{
+    function testSuccessfulPurchase() public{
 		string memory eventName = "sampleEvent";
 		uint256 ticketPrice = 1e18;
 		uint256 maxTickets = 30;
@@ -69,8 +69,13 @@ contract EndToEnd is Test {
         assertEq(id, 1);
 		assertEq(ticketCollection.holderOf(id), bob);
 		assertEq(ticketCollection.holderNameOf(id), "Robert");
+        assertEq(ticketCollection.balanceOf(bob), 1);
+		assertEq(purchaseToken.balanceOf(alice), 2e18);
         
     }
+
+    //function testUnsuccessfulPurchase() public{}
+
 	//function test
 
 	/*
