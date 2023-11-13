@@ -24,6 +24,13 @@ contract EndToEnd is Test {
         uint256 value
     );
 
+    event Purchase(
+        address indexed holder,
+        address indexed ticketCollection,
+        uint256 ticketId,
+        string holderName
+    );
+
     event Log (uint256 amount);
 
     PrimaryMarket public primaryMarket;
@@ -78,6 +85,8 @@ contract EndToEnd is Test {
         vm.expectEmit(true, true, true, true);
         emit Approval(bob, address(primaryMarket), ticketPrice);
         purchaseToken.approve(address(primaryMarket), ticketPrice);
+        vm.expectEmit(true, true, true, true);
+        emit Purchase(bob, address(ticketCollection), 1, "Robert");
         uint256 id = primaryMarket.purchase(address(ticketCollection), "Robert");
         vm.stopPrank();
 

@@ -15,6 +15,13 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
         uint256 maxNumberOfTickets
     );
 
+    event Purchase(
+        address indexed holder,
+        address indexed ticketCollection,
+        uint256 ticketId,
+        string holderName
+    );
+
     event Log(address someone);
 	/* End of Section to be Deleted */
 
@@ -77,7 +84,7 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
         require(_purchaseToken.balanceOf(msg.sender) >= priceOfATicket[ticketCollection], "Insufficient funds");
 
         uint256 newTokenID = collection.mint(msg.sender, holderName);
-        emit Log(msg.sender);
+        emit Purchase(msg.sender, ticketCollection, newTokenID, holderName);
         _purchaseToken.transferFrom(msg.sender, collection.creator(), priceOfATicket[ticketCollection]);
         return newTokenID;
     }
