@@ -2,19 +2,37 @@ pragma solidity ^0.8.10;
 
 import "../interfaces/ITicketNFT.sol";
 
-contract TicketNFT { //is ITicketNFT to be added at the end
+contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
 
+    /*event Approval(
+        address indexed holder,
+        address indexed approved,
+        uint256 indexed ticketID
+    );
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 indexed ticketID
+    );*/
+    
     event Log (uint256 message);
 	string _collectionName;
 	uint256 _numberOfMintedTickets = 0; // No tokens minted in the beginning
 	//string _currentTicketHolder; I believe a mapping is req for this 
-	uint256 _validUntil;
-	bool _hasBeenUsed = false;
 	address _creator;
 	uint256 _maxNumberOfTickets;
     mapping(uint256 => address) internal _holderOf;
     mapping(address => uint256) internal _balanceOf;
-    mapping(address => string) internal _nameOf;
+    mapping(uint256 => string) internal _holderNameOf;
+	mapping(uint256 => uint256) internal _validUntil;
+    mapping(uint256 => bool) internal _hasBeenUsed;
+    mapping(address => mapping(uint256 => address)) internal _hasApproval;
+
+    modifier TicketExists(uint256 ticketID) {
+        require(ticketID > 0 && ticketID <= _numberOfMintedTickets, "Invalid ticketID");
+        _;
+    }
 
 	// string memory currentTicketHolder (to be added as an argument)
 	constructor(
@@ -25,7 +43,6 @@ contract TicketNFT { //is ITicketNFT to be added at the end
 		_collectionName = collectionName;
 		_maxNumberOfTickets = maxNumOfTickets;
 		//_currentTicketHolder = currentTicketHolder;
-		_validUntil = block.timestamp * 864000;
 		_creator = collectionCreator;
 	}
 
@@ -48,9 +65,11 @@ contract TicketNFT { //is ITicketNFT to be added at the end
     function mint(address holder, string memory holderName) external returns (uint256 id){
         uint256 newTokenID = _numberOfMintedTickets + 1;
         _holderOf[newTokenID] = holder;
-        _nameOf[holder] = holderName;
+        _holderNameOf[newTokenID] = holderName;
         _balanceOf[holder]++;
         _numberOfMintedTickets++;
+        _hasBeenUsed[newTokenID] = false;
+		_validUntil[newTokenID] = block.timestamp * 864000;
         return newTokenID;
     }
 
@@ -58,7 +77,7 @@ contract TicketNFT { //is ITicketNFT to be added at the end
         return _balanceOf[holder];
     }
 
-    function holderOf(uint256 ticketID) external view returns (address holder){
+    function holderOf(uint256 ticketID) TicketExists(ticketID) external view returns (address holder){
         return _holderOf[ticketID];
     }
 
@@ -66,27 +85,50 @@ contract TicketNFT { //is ITicketNFT to be added at the end
         address from,
         address to,
         uint256 ticketID
-    ) external{}
+    ) TicketExists(ticketID) external{
+        // SHOULD WORRY ABOUT THE 0 ADDRESS PART
+        require(_holderOf[ticketID] == msg.sender || _hasApproval[from][ticketID] == msg.sender, "You do not have the right to list that ticket");
+        emit Transfer(from, to, ticketID);
+        _holderOf[ticketID] = to;
+    }
 
-    function approve(address to, uint256 ticketID) external{}
+    function approve(address to, uint256 ticketID) TicketExists(ticketID) external{
+        require(ticketID > 0 && ticketID <= _numberOfMintedTickets, "Invalid ticket ID");
+        require(_holderOf[ticketID] == msg.sender);
+        emit Approval(msg.sender, to, ticketID);
+        _hasApproval[msg.sender][ticketID] = to;
+    }
 
     function getApproved(uint256 ticketID)
-        external
+        TicketExists(ticketID) external
         view
-        returns (address operator){}
+        returns (address operator){
+            return _hasApproval[_holderOf[ticketID]][ticketID];
+        }
 
     function holderNameOf(uint256 ticketID)
-        external
+        TicketExists(ticketID) external
         view
         returns (string memory holderName){
-            address holder = _holderOf[ticketID];
-            return _nameOf[holder];
+            return _holderNameOf[ticketID];
         }
 
     function updateHolderName(uint256 ticketID, string calldata newName)
-        external{}
+        TicketExists(ticketID) external{
+            address holder = _holderOf[ticketID];
+            require(msg.sender == holder, "You have no permission to update the holder's name");
+            _holderNameOf[ticketID] = newName;
+        }
 
-    function setUsed(uint256 ticketID) external{}
+    function setUsed(uint256 ticketID) TicketExists(ticketID) external{
+        require(_hasBeenUsed[ticketID] != true, "The ticket had already been used");
+        require(block.timestamp >= _validUntil[ticketID], "The ticket has already expired");
+        require(msg.sender == _creator, "Only the creator can call this function");
+        _hasBeenUsed[ticketID] = true;
+    }
 
-    function isExpiredOrUsed(uint256 ticketID) external view returns (bool){}
+    function isExpiredOrUsed(uint256 ticketID) TicketExists(ticketID) external view returns (bool){
+        bool isExpired = block.timestamp >= _validUntil[ticketID];
+        return _hasBeenUsed[ticketID] && isExpired;
+    }
 } 
