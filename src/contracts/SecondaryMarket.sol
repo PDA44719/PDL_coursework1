@@ -20,7 +20,6 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
         TicketNFT collection = TicketNFT(ticketCollection);
         require(msg.sender == collection.holderOf(ticketID) || _listedTicketsAndOwners[ticketCollection][ticketID] == msg.sender, "Only the ticket owner can call this function");
         _;
-        // SHOULD ADD SOME CHECK HERE TO MAKE SURE THAT THE ESCROWED AMOUNT GETS RETURNED AFTER THE TICKET HAS EXPIRED
     }
 
     modifier NonExpiredAndUnused(address ticketCollection, uint256 ticketID) {
@@ -141,7 +140,10 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
      * The final amount that the lister of the ticket receives is the price
      * minus the fee. The fee should go to the creator of the `ticketCollection`.
      */
-    function acceptBid(address ticketCollection, uint256 ticketID) OnlyTicketOwner(ticketCollection, ticketID) external{
+    function acceptBid(
+        address ticketCollection,
+        uint256 ticketID
+    ) OnlyTicketOwner(ticketCollection, ticketID) NonExpiredAndUnused(ticketCollection, ticketID) external{
         require(_maxTicketBid[ticketCollection][ticketID] != 0, "No bids have been made yet");
         TicketNFT collection = TicketNFT(ticketCollection);
         _purchaseToken.transferFrom(_maxBidderAddress[ticketCollection][ticketID], msg.sender, _maxTicketBid[ticketCollection][ticketID] * 95 / 100);
@@ -155,8 +157,20 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
      * to msg.sender, i.e., the lister, and escrowed bid funds should be return to the bidder, if any.
      */
     function delistTicket(address ticketCollection, uint256 ticketID) OnlyTicketOwner(ticketCollection, ticketID) external{
-        // return the escrowed amount to back the previous max bidder
+        // return the escrowed amount back to the max bidder
         _purchaseToken.transfer(_maxBidderAddress[ticketCollection][ticketID], _maxTicketBid[ticketCollection][ticketID]);
+        _deleteMappingEntries(ticketCollection, ticketID);
+    }
+
+    /** MY OWN METHOD, WHICH WILL BE USED IN CASES WHEN THE TICKET EXPIRES AND THE LISTER DOES NOT DELIST THE TICKET
+     */
+    function claimEscrowAmount(address ticketCollection, uint256 ticketID) external {
+        require(msg.sender = _maxBidderAddress[ticketCollection][ticketID], "You do not have permission to claim these funds");
+        TicketNFT collection = TicketNFT(ticketCollection);
+        if (collection.isExpiredOrUsed(ticketID)) {
+            // return the escrowed amount back to the max bidder
+            _purchaseToken.transfer(msg.sender, _maxTicketBid[ticketCollection][ticketID]);
+        }
         _deleteMappingEntries(ticketCollection, ticketID);
     }
 
