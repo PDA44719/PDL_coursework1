@@ -87,14 +87,13 @@ contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
         uint256 ticketID
     ) TicketExists(ticketID) external{
         // SHOULD WORRY ABOUT THE 0 ADDRESS PART
-        require(_holderOf[ticketID] == msg.sender || _hasApproval[from][ticketID] == msg.sender, "You do not have the right to list that ticket");
+        require(_holderOf[ticketID] == msg.sender || _hasApproval[from][ticketID] == msg.sender, "You do not have the right to transfer that ticket");
         emit Transfer(from, to, ticketID);
         _holderOf[ticketID] = to;
     }
 
     function approve(address to, uint256 ticketID) TicketExists(ticketID) external{
-        require(ticketID > 0 && ticketID <= _numberOfMintedTickets, "Invalid ticket ID");
-        require(_holderOf[ticketID] == msg.sender);
+        require(_holderOf[ticketID] == msg.sender, "You do not own that ticket");
         emit Approval(msg.sender, to, ticketID);
         _hasApproval[msg.sender][ticketID] = to;
     }
