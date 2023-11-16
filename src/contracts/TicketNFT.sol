@@ -30,6 +30,7 @@ contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
     mapping(address => mapping(uint256 => address)) internal _hasApproval;
 
     modifier TicketExists(uint256 ticketID) {
+        //emit Log(_numberOfMintedTickets);
         require(ticketID > 0 && ticketID <= _numberOfMintedTickets, "Invalid ticketID");
         _;
     }
@@ -90,6 +91,8 @@ contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
         require(_holderOf[ticketID] == msg.sender || _hasApproval[from][ticketID] == msg.sender, "You do not have the right to transfer that ticket");
         emit Transfer(from, to, ticketID);
         _holderOf[ticketID] = to;
+        _balanceOf[to]++;
+        _balanceOf[from]--;
     }
 
     function approve(address to, uint256 ticketID) TicketExists(ticketID) external{

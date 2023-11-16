@@ -7,7 +7,7 @@ import "../interfaces/ISecondaryMarket.sol";
 import "../contracts/PurchaseToken.sol";
 import "../contracts/TicketNFT.sol";
 
-contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
+contract SecondaryMarket is ISecondaryMarket { 
 
     mapping(address => mapping(uint256 => address)) internal _listedTicketsAndOwners;
     mapping(address => mapping(uint256 => uint256)) internal _listedTicketPrices;
@@ -18,7 +18,11 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
 
     modifier OnlyTicketOwner(address ticketCollection, uint256 ticketID) {
         TicketNFT collection = TicketNFT(ticketCollection);
-        require(msg.sender == collection.holderOf(ticketID) || _listedTicketsAndOwners[ticketCollection][ticketID] == msg.sender, "Only the ticket owner can call this function");
+        require(
+            msg.sender == collection.holderOf(ticketID) ||  // User is the owner
+            _listedTicketsAndOwners[ticketCollection][ticketID] == msg.sender,
+            "Only the ticket owner can call this function"
+        );
         _;
     }
 
@@ -27,31 +31,6 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
         require(collection.isExpiredOrUsed(ticketID) == false, "The ticket has already expired/been used");
         _;
     }
-
-    event Listing(
-        address indexed holder,
-        address indexed ticketCollection,
-        uint256 indexed ticketID,
-        uint256 price
-    );
-
-    event BidSubmitted(
-        address indexed bidder,
-        address indexed ticketCollection,
-        uint256 indexed ticketID,
-        uint256 bidAmount,
-        string newName
-    );
-
-    event BidAccepted(
-        address indexed bidder,
-        address indexed ticketCollection,
-        uint256 indexed ticketID,
-        uint256 bidAmount,
-        string newName
-    );
-
-    event Delisting(address indexed ticketCollection, uint256 indexed ticketID);
 
 	constructor(PurchaseToken purchaseToken){
 		_purchaseToken = purchaseToken;
@@ -97,8 +76,8 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
             _purchaseToken.transfer(_maxBidderAddress[ticketCollection][ticketID], _maxTicketBid[ticketCollection][ticketID]);
         }
         emit BidSubmitted(msg.sender, ticketCollection, ticketID, bidAmount, name);
-        TicketNFT collection = TicketNFT(ticketCollection);
-        collection.transferFrom(msg.sender, address(this), bidAmount);
+        //TicketNFT collection = TicketNFT(ticketCollection);
+        _purchaseToken.transferFrom(msg.sender, address(this), bidAmount);
         _maxTicketBid[ticketCollection][ticketID] = bidAmount;
         _maxBidderAddress[ticketCollection][ticketID] = msg.sender;
         _maxBidName[ticketCollection][ticketID] = name;
@@ -111,7 +90,8 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
         address ticketCollection,
         uint256 ticketId
     ) external view returns (uint256){
-        return _maxTicketBid[ticketCollection][ticketId];
+        uint256 currentMaxBid = _maxTicketBid[ticketCollection][ticketId];
+        return currentMaxBid > 0 ? currentMaxBid : _listedTicketPrices[ticketCollection][ticketId];
     }
 
     /**
@@ -146,9 +126,15 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
     ) OnlyTicketOwner(ticketCollection, ticketID) NonExpiredAndUnused(ticketCollection, ticketID) external{
         require(_maxTicketBid[ticketCollection][ticketID] != 0, "No bids have been made yet");
         TicketNFT collection = TicketNFT(ticketCollection);
-        _purchaseToken.transferFrom(_maxBidderAddress[ticketCollection][ticketID], msg.sender, _maxTicketBid[ticketCollection][ticketID] * 95 / 100);
-        _purchaseToken.transferFrom(_maxBidderAddress[ticketCollection][ticketID], collection.creator(), _maxTicketBid[ticketCollection][ticketID] * 5 / 100);
-        collection.transferFrom(msg.sender, _maxBidderAddress[ticketCollection][ticketID], ticketID);
+        emit BidAccepted(
+            _maxBidderAddress[ticketCollection][ticketID],
+            ticketCollection, ticketID,
+            _maxTicketBid[ticketCollection][ticketID],
+            _maxBidName[ticketCollection][ticketID]);
+        _purchaseToken.transfer(msg.sender, _maxTicketBid[ticketCollection][ticketID] * 95 / 100);
+        _purchaseToken.transfer(collection.creator(), _maxTicketBid[ticketCollection][ticketID] * 5 / 100);
+        collection.updateHolderName(ticketID, _maxBidName[ticketCollection][ticketID]);
+        collection.transferFrom(address(this), _maxBidderAddress[ticketCollection][ticketID], ticketID);
         _deleteMappingEntries(ticketCollection, ticketID);
     }
 
@@ -157,6 +143,7 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
      * to msg.sender, i.e., the lister, and escrowed bid funds should be return to the bidder, if any.
      */
     function delistTicket(address ticketCollection, uint256 ticketID) OnlyTicketOwner(ticketCollection, ticketID) external{
+        emit Delisting(ticketCollection, ticketID);
         // return the escrowed amount back to the max bidder
         _purchaseToken.transfer(_maxBidderAddress[ticketCollection][ticketID], _maxTicketBid[ticketCollection][ticketID]);
         _deleteMappingEntries(ticketCollection, ticketID);
@@ -165,7 +152,7 @@ contract SecondaryMarket { //is ISecondaryMarket // to be added at some point
     /** MY OWN METHOD, WHICH WILL BE USED IN CASES WHEN THE TICKET EXPIRES AND THE LISTER DOES NOT DELIST THE TICKET
      */
     function claimEscrowAmount(address ticketCollection, uint256 ticketID) external {
-        require(msg.sender = _maxBidderAddress[ticketCollection][ticketID], "You do not have permission to claim these funds");
+        require(msg.sender == _maxBidderAddress[ticketCollection][ticketID], "You do not have permission to claim these funds");
         TicketNFT collection = TicketNFT(ticketCollection);
         if (collection.isExpiredOrUsed(ticketID)) {
             // return the escrowed amount back to the max bidder

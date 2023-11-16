@@ -4,23 +4,9 @@ import "../interfaces/IPrimaryMarket.sol";
 import "../contracts/PurchaseToken.sol";
 import "../contracts/TicketNFT.sol";
 
-contract PrimaryMarket { //is IPrimaryMarket to be added
+contract PrimaryMarket is IPrimaryMarket{ //is IPrimaryMarket to be added
 	/* This section is to be deleted before submission, as the interface 
 	already has these events, so there is no need to add them here*/
-    event EventCreated(
-        address indexed creator,
-        address indexed ticketCollection,
-        string eventName,
-        uint256 price,
-        uint256 maxNumberOfTickets
-    );
-
-    event Purchase(
-        address indexed holder,
-        address indexed ticketCollection,
-        uint256 ticketId,
-        string holderName
-    );
 
     event Log(address someone);
 	/* End of Section to be Deleted */
@@ -36,7 +22,7 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
         string memory eventName,
         uint256 price,
         uint256 maxNumberOfTickets
-    ) external returns (TicketNFT ticketCollection){ // This is to be changed to class ITicketCollection
+    ) external returns (ITicketNFT ticketCollection){ 
 
 		/*bytes memory callData = abi.encodePacked(
             type(TicketNFT).creationCode,
@@ -61,7 +47,7 @@ contract PrimaryMarket { //is IPrimaryMarket to be added
 		priceOfATicket[address(collection)] = price;
 		emit EventCreated(msg.sender, address(collection), eventName, 
 						 price, maxNumberOfTickets);
-		return collection;
+		return TicketNFT(collection);
 		 
 	}
 
