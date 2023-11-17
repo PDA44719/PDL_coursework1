@@ -7,7 +7,7 @@ import "../src/interfaces/ITicketNFT.sol";
 import "../src/interfaces/IPrimaryMarket.sol";
 import "../src/contracts/PrimaryMarket.sol";
 import "../src/contracts/TicketNFT.sol";
-//import "../src/contracts/SecondaryMarket.sol";
+import "../src/contracts/SecondaryMarket.sol";
 
 contract EndToEnd is Test {
     event EventCreated(
@@ -32,10 +32,11 @@ contract EndToEnd is Test {
     );
 
     event Log (uint256 amount);
+    event Print(string check);
 
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
-    //SecondaryMarket public secondaryMarket;
+    SecondaryMarket public secondaryMarket;
 
     address public alice = makeAddr("alice");
     address public bob = makeAddr("bob");
@@ -44,7 +45,7 @@ contract EndToEnd is Test {
     function setUp() public {
         purchaseToken = new PurchaseToken();
         primaryMarket = new PrimaryMarket(purchaseToken);
-        //secondaryMarket = new SecondaryMarket(purchaseToken);
+        secondaryMarket = new SecondaryMarket(purchaseToken);
 
         payable(alice).transfer(1e18);
         payable(bob).transfer(2e18);
@@ -54,7 +55,7 @@ contract EndToEnd is Test {
 		string memory eventName = "sampleEvent";
 		uint256 ticketPrice = 20;
 		uint256 maxTickets = 30;
-		TicketNFT ticketCollection;
+		ITicketNFT ticketCollection;
 		vm.prank(alice);
 		// address of collection not checked as it was not created yet
 		vm.expectEmit(true, false, false, true); 
@@ -73,7 +74,7 @@ contract EndToEnd is Test {
 		string memory eventName = "sampleEvent";
 		uint256 ticketPrice = 1e20;
 		uint256 maxTickets = 30;
-		TicketNFT ticketCollection;
+		ITicketNFT ticketCollection;
 		vm.startPrank(alice);
         purchaseToken.mint{value: 1e18}(); // This value will be x100
 		ticketCollection = primaryMarket.createNewEvent(
@@ -101,7 +102,7 @@ contract EndToEnd is Test {
 		string memory eventName = "sampleEvent";
 		uint256 ticketPrice = 1e5;
 		uint256 maxTickets = 1;
-		TicketNFT ticketCollection;
+		ITicketNFT ticketCollection;
 		vm.startPrank(alice);
         purchaseToken.mint{value: 1e18}(); // This value will be x100
 		ticketCollection = primaryMarket.createNewEvent(
@@ -119,7 +120,7 @@ contract EndToEnd is Test {
 		string memory eventName = "sampleEvent";
 		uint256 ticketPrice = 1e18;
 		uint256 maxTickets = 1;
-		TicketNFT ticketCollection;
+		ITicketNFT ticketCollection;
 		vm.startPrank(alice);
         purchaseToken.mint{value: 1e18}(); // This value will be x100
 		ticketCollection = primaryMarket.createNewEvent(
@@ -138,7 +139,7 @@ contract EndToEnd is Test {
 		string memory eventName = "sampleEvent";
 		uint256 ticketPrice = 1e5;
 		uint256 maxTickets = 1;
-		TicketNFT ticketCollection;
+		ITicketNFT ticketCollection;
 		vm.startPrank(alice);
         purchaseToken.mint{value: 1e18}(); // This value will be x100
 		ticketCollection = primaryMarket.createNewEvent(
@@ -157,7 +158,7 @@ contract EndToEnd is Test {
 
 	//function test
 
-	/*
+	
     function testEndToEnd() external {
         uint256 ticketPrice = 20e18;
         uint256 bidPrice = 155e18;
@@ -228,5 +229,5 @@ contract EndToEnd is Test {
         assertEq(ticketNFT.holderOf(id), bob);
         assertEq(ticketNFT.holderNameOf(id), "Bob");
     }
-	*/
+	
 }

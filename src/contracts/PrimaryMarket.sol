@@ -74,4 +74,5 @@ contract PrimaryMarket is IPrimaryMarket{ //is IPrimaryMarket to be added
         _purchaseToken.transferFrom(msg.sender, collection.creator(), priceOfATicket[ticketCollection]);
         return newTokenID;
     }
+
 }

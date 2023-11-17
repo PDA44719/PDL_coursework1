@@ -1,26 +1,14 @@
 pragma solidity ^0.8.10;
 
 import "../interfaces/ITicketNFT.sol";
+import "../contracts/PrimaryMarket.sol";
 
-contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
-
-    /*event Approval(
-        address indexed holder,
-        address indexed approved,
-        uint256 indexed ticketID
-    );
-
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 indexed ticketID
-    );*/
-    
-    event Log (uint256 message);
+contract TicketNFT is ITicketNFT{ 
+    event Log(bytes4 message);
 	string _collectionName;
 	uint256 _numberOfMintedTickets = 0; // No tokens minted in the beginning
-	//string _currentTicketHolder; I believe a mapping is req for this 
 	address _creator;
+	address _primaryMarket;
 	uint256 _maxNumberOfTickets;
     mapping(uint256 => address) internal _holderOf;
     mapping(address => uint256) internal _balanceOf;
@@ -30,7 +18,6 @@ contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
     mapping(address => mapping(uint256 => address)) internal _hasApproval;
 
     modifier TicketExists(uint256 ticketID) {
-        //emit Log(_numberOfMintedTickets);
         require(ticketID > 0 && ticketID <= _numberOfMintedTickets, "Invalid ticketID");
         _;
     }
@@ -43,8 +30,8 @@ contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
 	) {
 		_collectionName = collectionName;
 		_maxNumberOfTickets = maxNumOfTickets;
-		//_currentTicketHolder = currentTicketHolder;
 		_creator = collectionCreator;
+        _primaryMarket = msg.sender;
 	}
 
     function creator() external view returns (address){
@@ -64,6 +51,7 @@ contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
     }
 
     function mint(address holder, string memory holderName) external returns (uint256 id){
+        require(msg.sender == _primaryMarket, "Only the primary Market can mint tickets");
         uint256 newTokenID = _numberOfMintedTickets + 1;
         _holderOf[newTokenID] = holder;
         _holderNameOf[newTokenID] = holderName;
@@ -71,6 +59,7 @@ contract TicketNFT is ITicketNFT{ //is ITicketNFT to be added at the end
         _numberOfMintedTickets++;
         _hasBeenUsed[newTokenID] = false;
 		_validUntil[newTokenID] = block.timestamp * 864000;
+        emit Transfer(address(0), holder, newTokenID);
         return newTokenID;
     }
 
