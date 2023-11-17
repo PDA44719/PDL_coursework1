@@ -15,7 +15,7 @@ contract TicketNFT is ITicketNFT{
     mapping(uint256 => string) internal _holderNameOf;
 	mapping(uint256 => uint256) internal _validUntil;
     mapping(uint256 => bool) internal _hasBeenUsed;
-    mapping(address => mapping(uint256 => address)) internal _hasApproval;
+    mapping(uint256 => address) internal _hasApproval;
 
     modifier TicketExists(uint256 ticketID) {
         require(ticketID > 0 && ticketID <= _numberOfMintedTickets, "Invalid ticketID");
@@ -76,25 +76,28 @@ contract TicketNFT is ITicketNFT{
         address to,
         uint256 ticketID
     ) TicketExists(ticketID) external{
-        // SHOULD WORRY ABOUT THE 0 ADDRESS PART
-        require(_holderOf[ticketID] == msg.sender || _hasApproval[from][ticketID] == msg.sender, "You do not have the right to transfer that ticket");
-        emit Transfer(from, to, ticketID);
+        require(from != address(0), "'from' address cannot be the zero address");
+        require(to != address(0), "'to' address cannot be the zero address");
+        require(_holderOf[ticketID] == msg.sender || _hasApproval[ticketID] == msg.sender, "You do not have the right to transfer that ticket");
         _holderOf[ticketID] = to;
         _balanceOf[to]++;
         _balanceOf[from]--;
+        _hasApproval[ticketID] = address(0);
+        emit Transfer(from, to, ticketID);
+        emit Approval(to, address(0), ticketID);
     }
 
     function approve(address to, uint256 ticketID) TicketExists(ticketID) external{
         require(_holderOf[ticketID] == msg.sender, "You do not own that ticket");
+        _hasApproval[ticketID] = to;
         emit Approval(msg.sender, to, ticketID);
-        _hasApproval[msg.sender][ticketID] = to;
     }
 
     function getApproved(uint256 ticketID)
         TicketExists(ticketID) external
         view
         returns (address operator){
-            return _hasApproval[_holderOf[ticketID]][ticketID];
+            return _hasApproval[ticketID];
         }
 
     function holderNameOf(uint256 ticketID)
@@ -120,6 +123,6 @@ contract TicketNFT is ITicketNFT{
 
     function isExpiredOrUsed(uint256 ticketID) TicketExists(ticketID) external view returns (bool){
         bool isExpired = block.timestamp >= _validUntil[ticketID];
-        return _hasBeenUsed[ticketID] && isExpired;
+        return _hasBeenUsed[ticketID] || isExpired;
     }
 } 
