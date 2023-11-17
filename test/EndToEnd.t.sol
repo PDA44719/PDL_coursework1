@@ -156,6 +156,37 @@ contract EndToEnd is Test {
         vm.stopPrank();
     }
 
+    function testDelistTicket() public{
+		string memory eventName = "sampleEvent";
+		uint256 ticketPrice = 1e5;
+		uint256 maxTickets = 1;
+		ITicketNFT ticketCollection;
+		vm.startPrank(charlie);
+		ticketCollection = primaryMarket.createNewEvent(
+			eventName, ticketPrice, maxTickets
+		);
+        vm.stopPrank();
+        vm.startPrank(alice);
+        purchaseToken.mint{value: 1e18}(); // This value will be x100
+        purchaseToken.approve(address(primaryMarket), ticketPrice);
+        uint256 id = primaryMarket.purchase(address(ticketCollection), "Alice");
+        ticketCollection.approve(address(secondaryMarket), id);
+        secondaryMarket.listTicket(address(ticketCollection), id, 1e6);
+        assertEq(ticketCollection.holderOf(id), address(secondaryMarket));
+        assertEq(ticketCollection.balanceOf(address(secondaryMarket)), 1);
+        secondaryMarket.delistTicket(address(ticketCollection), id);
+        assertEq(ticketCollection.balanceOf(address(secondaryMarket)), 0);
+        vm.stopPrank();
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 2e18}(); // This value will be x100
+        purchaseToken.approve(address(secondaryMarket), 1e6);
+        vm.expectRevert("That ticket is not listed");
+        secondaryMarket.submitBid(address(ticketCollection), id, 1e6, "Robert");
+        assertEq(purchaseToken.balanceOf(address(secondaryMarket)), 0);
+        vm.stopPrank();
+
+    }
+
 	//function test
 
 	
