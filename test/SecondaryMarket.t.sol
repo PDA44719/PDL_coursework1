@@ -78,7 +78,15 @@ contract SecondaryMarketTest is Test {
         vm.prank(bob);
         vm.expectRevert("Permission error: Ticket could not be transferred");
         secondaryMarket.listTicket(address(ticketCollection), 1, 1e7);
+    }
 
+    function testListTicketWithoutBeingTheOwner() public {
+        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+
+        // Attempt to list the ticket from Alice's address (not the owner)
+        vm.prank(alice);
+        vm.expectRevert("Only the ticket owner can call this function");
+        secondaryMarket.listTicket(address(ticketCollection), 1, 1e7);
     }
 
     function testDelistTicket() public {
