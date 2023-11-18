@@ -47,8 +47,6 @@ contract PrimaryMarket is IPrimaryMarket {
         address ticketCollection,
         string memory holderName
     ) external returns (uint256 id) {
-        TicketNFT collection = TicketNFT(ticketCollection);
-
         // Ensure that sender has approved the amount and has sufficient funds
         require(
             _purchaseToken.allowance(msg.sender, address(this)) >=
@@ -62,6 +60,7 @@ contract PrimaryMarket is IPrimaryMarket {
         );
 
         // Mint ticket and transfer purchase price to the collection creator
+        TicketNFT collection = TicketNFT(ticketCollection);
         uint256 newTokenID = collection.mint(msg.sender, holderName);
         _purchaseToken.transferFrom(
             msg.sender,

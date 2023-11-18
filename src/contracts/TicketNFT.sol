@@ -25,7 +25,7 @@ contract TicketNFT is ITicketNFT {
     modifier TicketExists(uint256 ticketID) {
         require(
             ticketID > 0 && ticketID <= _numberOfMintedTickets,
-            "Invalid ticketID"
+            "Invalid ticket ID"
         );
         _;
     }
