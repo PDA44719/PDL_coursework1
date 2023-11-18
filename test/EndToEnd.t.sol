@@ -177,6 +177,116 @@ contract EndToEnd is Test {
         ticketCollection.holderOf(1);
     }
 
+    function testMintingFromOutsidePrimaryMarket() public {
+        // Create the collection
+        vm.prank(alice);
+        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+            "sampleEvent",
+            1e5,
+            30
+        );
+
+        // Attempt to mint directly from Bob's address
+        vm.prank(bob);
+        vm.expectRevert("Only the primary Market can mint tickets");
+        ticketCollection.mint(bob, "Robert");
+    }
+
+    function testTransferTicketWithoutApproval() public {
+        // Create the collection and mint one ticket
+        vm.prank(alice);
+        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+            "sampleEvent",
+            1e5,
+            30
+        );
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 1e3}(); 
+        purchaseToken.approve(address(primaryMarket), 1e5);
+        uint256 id = primaryMarket.purchase(
+            address(ticketCollection),
+            "Robert"
+        );
+        vm.stopPrank();
+
+        // Attempt to transfer the ticket to Charlie without permission
+        vm.prank(charlie);
+        vm.expectRevert("Permission error: Ticket could not be transferred");
+        ticketCollection.transferFrom(bob, charlie, id);
+    }
+
+    function testApproveTransferOfTicketOwnedByThirdParty() public {
+        // Create the collection and mint one ticket
+        vm.prank(alice);
+        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+            "sampleEvent",
+            1e5,
+            30
+        );
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 1e3}(); 
+        purchaseToken.approve(address(primaryMarket), 1e5);
+        uint256 id = primaryMarket.purchase(
+            address(ticketCollection),
+            "Robert"
+        );
+        vm.stopPrank();
+
+        // Attempt to approve the ticket's transfer from Charlie's address
+        vm.prank(charlie);
+        vm.expectRevert("You do not own that ticket");
+        ticketCollection.approve(charlie, id);
+    }
+    
+    function testZeroAdressTransfer() public {
+        // Create the collection and mint one ticket
+        vm.prank(alice);
+        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+            "sampleEvent",
+            1e5,
+            30
+        );
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 1e3}(); 
+        purchaseToken.approve(address(primaryMarket), 1e5);
+        uint256 id = primaryMarket.purchase(
+            address(ticketCollection),
+            "Robert"
+        );
+
+        // Attempt to transfer the ticket to the zero address
+        vm.expectRevert("'to' address cannot be the zero address");
+        ticketCollection.transferFrom(bob, address(0), id);
+
+        // Attempt to transfer the ticket from the zero address
+        vm.expectRevert("'from' address cannot be the zero address");
+        ticketCollection.transferFrom(address(0), alice, id);
+        vm.stopPrank();
+    }
+
+    function testListTicketWithoutApproval() public {
+        // Create the collection and mint one ticket
+        vm.prank(alice);
+        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+            "sampleEvent",
+            1e5,
+            30
+        );
+        vm.startPrank(bob);
+        purchaseToken.mint{value: 1e3}(); 
+        purchaseToken.approve(address(primaryMarket), 1e5);
+        uint256 id = primaryMarket.purchase(
+            address(ticketCollection),
+            "Robert"
+        );
+
+        // Attempt to list the ticket without approving its transfer
+        vm.expectRevert("Permission error: Ticket could not be transferred");
+        secondaryMarket.listTicket(address(ticketCollection), id, 1e7);
+        vm.stopPrank();
+
+    }
+
     function testDelistTicket() public {
         string memory eventName = "sampleEvent";
         uint256 ticketPrice = 1e5;

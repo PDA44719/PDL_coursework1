@@ -107,7 +107,7 @@ contract TicketNFT is ITicketNFT {
         require(
             _tickets[ticketID].holder == msg.sender ||
                 _tickets[ticketID].approved == msg.sender,
-            "You do not have the right to transfer that ticket"
+            "Permission error: Ticket could not be transferred"
         );
 
         // Update the holder and balance information
