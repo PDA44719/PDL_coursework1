@@ -4,7 +4,8 @@ import "../interfaces/ITicketNFT.sol";
 import "../contracts/PrimaryMarket.sol";
 
 contract TicketNFT is ITicketNFT {
-    event Log(bytes4 message);
+    event Log(uint256 message);
+    event Print(string check);
 
     struct TicketInfo {
         address holder;
@@ -71,7 +72,7 @@ contract TicketNFT is ITicketNFT {
         _tickets[newTokenID] = TicketInfo({
             holder: holder,
             holderName: holderName,
-            validUntil: block.timestamp * 864000,
+            validUntil: block.timestamp + 864000,
             hasBeenUsed: false,
             approved: address(0)
         });
@@ -153,7 +154,7 @@ contract TicketNFT is ITicketNFT {
     ) external TicketExists(ticketID) {
         require(
             msg.sender == _tickets[ticketID].holder,
-            "You have no permission to update the holder's name"
+            "Only the ticket holder can update the name"
         );
 
         _tickets[ticketID].holderName = newName;
@@ -165,12 +166,12 @@ contract TicketNFT is ITicketNFT {
             "The ticket had already been used"
         );
         require(
-            block.timestamp >= _tickets[ticketID].validUntil,
+            block.timestamp < _tickets[ticketID].validUntil,
             "The ticket has already expired"
         );
         require(
             msg.sender == _creator,
-            "Only the creator can call this function"
+            "Only the collection creator can call this function"
         );
 
         _tickets[ticketID].hasBeenUsed = true;
