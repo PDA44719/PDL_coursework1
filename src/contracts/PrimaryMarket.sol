@@ -34,7 +34,7 @@ contract PrimaryMarket is IPrimaryMarket {
             price,
             maxNumberOfTickets
         );
-        return TicketNFT(collection);
+        return collection;
     }
 
     function getPrice(

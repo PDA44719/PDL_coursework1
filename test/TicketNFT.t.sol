@@ -18,12 +18,6 @@ contract TicketNFTTest is Test {
         uint256 maxNumberOfTickets
     );
 
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-
     event Purchase(
         address indexed holder,
         address indexed ticketCollection,
@@ -31,7 +25,17 @@ contract TicketNFTTest is Test {
         string holderName
     );
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(
+        address indexed holder,
+        address indexed approved,
+        uint256 indexed ticketID
+    );
+
+    event Transfer(
+        address indexed from,
+        address indexed to,
+        uint256 indexed ticketID
+    );
 
     event Log(uint256 amount);
     event Print(string check);
@@ -101,6 +105,31 @@ contract TicketNFTTest is Test {
         ticketCollection.mint(bob, "Robert");
     }
 
+    function testSuccesfulTransferTicket() public {
+        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+
+        // Approve Charlie to be able to transfer ticket 1
+        vm.prank(bob);
+        vm.expectEmit(true, true, true, false);
+        emit Approval(bob, charlie, 1);
+        ticketCollection.approve(charlie, 1);
+
+        // Transfer ticket to Charlie
+        vm.startPrank(charlie);
+        vm.expectEmit(true, true, true, false);
+        emit Transfer(bob, charlie, 1);
+        vm.expectEmit(true, true, true, false);
+        emit Approval(charlie, address(0), 1);
+        ticketCollection.transferFrom(bob, charlie, 1);
+        ticketCollection.updateHolderName(1, "Charles");
+
+        assertEq(ticketCollection.balanceOf(charlie), 1);
+        assertEq(ticketCollection.balanceOf(bob), 0);
+        assertEq(ticketCollection.holderOf(1), charlie);
+        assertEq(ticketCollection.holderNameOf(1), "Charles");
+        assertEq(ticketCollection.getApproved(1), address(0)); 
+    }
+
     function testTransferTicketWithoutApproval() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
 
@@ -133,6 +162,13 @@ contract TicketNFTTest is Test {
         vm.stopPrank();
     }
 
+    function testUpdateHolderName() public {
+        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        vm.prank(bob);
+        ticketCollection.updateHolderName(1, "Bobby");
+        assertEq(ticketCollection.holderNameOf(1), "Bobby");
+    }
+
     function testUpdateHolderNameFromNonHolderAddress() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
 
@@ -146,10 +182,9 @@ contract TicketNFTTest is Test {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
         
         // Set the ticket to used
-        vm.startPrank(alice);
+        vm.prank(alice);
         ticketCollection.setUsed(1);
         assertEq(ticketCollection.isExpiredOrUsed(1), true);
-        vm.stopPrank();
     }
 
     function testExpiredTicket() public {
