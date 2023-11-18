@@ -152,7 +152,7 @@ contract SecondaryMarket is ISecondaryMarket {
 
     /** MY OWN METHOD, WHICH WILL BE USED IN CASES WHEN THE TICKET EXPIRES AND THE LISTER DOES NOT DELIST THE TICKET
      */
-    function claimEscrowAmount(address ticketCollection, uint256 ticketID) external {
+    function returnEscrowAmount(address ticketCollection, uint256 ticketID) external {
         require(msg.sender == _listedTickets[ticketCollection][ticketID].maxBidder, "You do not have permission to claim these funds");
         TicketNFT collection = TicketNFT(ticketCollection);
         if (collection.isExpiredOrUsed(ticketID)) {

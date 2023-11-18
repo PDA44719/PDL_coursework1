@@ -105,7 +105,7 @@ contract TicketNFTTest is Test {
         ticketCollection.mint(bob, "Robert");
     }
 
-    function testSuccesfulTransferTicket() public {
+    function testSuccesfulTicketTransfer() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
 
         // Approve Charlie to be able to transfer ticket 1
@@ -211,8 +211,6 @@ contract TicketNFTTest is Test {
 
     function testSetUsedTicketTwice() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
-
-        // Attempt to set the ticket to used twice
         vm.startPrank(alice);
         ticketCollection.setUsed(1);
         vm.expectRevert("The ticket had already been used");
