@@ -5,8 +5,6 @@ import "../contracts/PurchaseToken.sol";
 import "../contracts/TicketNFT.sol";
 
 contract PrimaryMarket is IPrimaryMarket {
-    event Log(address someone); // TO BE DELETED BEFORE SUBMITTING
-
     PurchaseToken _purchaseToken;
     mapping(address => uint256) internal _priceOfATicket;
 

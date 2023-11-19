@@ -4,9 +4,6 @@ import "../interfaces/ITicketNFT.sol";
 import "../contracts/PrimaryMarket.sol";
 
 contract TicketNFT is ITicketNFT {
-    event Log(uint256 message);
-    event Print(string check);
-
     struct TicketInfo {
         address holder;
         string holderName;
@@ -14,7 +11,6 @@ contract TicketNFT is ITicketNFT {
         bool hasBeenUsed;
         address approved;
     }
-
     mapping(uint256 => TicketInfo) internal _tickets;
     string _collectionName;
     uint256 _numberOfMintedTickets = 0; // No tokens minted in the beginning
