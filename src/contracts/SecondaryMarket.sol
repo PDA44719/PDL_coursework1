@@ -35,6 +35,11 @@ contract SecondaryMarket is ISecondaryMarket {
         _;
     }
 
+    modifier TicketIsListed(address ticketCollection, uint256 ticketID){
+        require(_listedTickets[ticketCollection][ticketID].owner != address(0), "That ticket is not listed");
+        _;
+    }
+
 	constructor(PurchaseToken purchaseToken){
 		_purchaseToken = purchaseToken;
 	}
@@ -68,9 +73,8 @@ contract SecondaryMarket is ISecondaryMarket {
         uint256 ticketID,
         uint256 bidAmount,
         string calldata name
-    ) NonExpiredAndUnused(ticketCollection, ticketID) external{
+    ) TicketIsListed(ticketCollection, ticketID) NonExpiredAndUnused(ticketCollection, ticketID) external{
         require(_purchaseToken.allowance(msg.sender, address(this)) == bidAmount, "Bid amount was not approved before submitting the bid");
-        require(_listedTickets[ticketCollection][ticketID].owner != address(0), "That ticket is not listed");
         if (_listedTickets[ticketCollection][ticketID].maxBid == 0){  // No bid has been made yet
             require(bidAmount >= _listedTickets[ticketCollection][ticketID].price, "The initial bid must be greater than the listing price");
         } else {
@@ -93,7 +97,7 @@ contract SecondaryMarket is ISecondaryMarket {
     function getHighestBid(
         address ticketCollection,
         uint256 ticketId
-    ) external view returns (uint256){
+    ) TicketIsListed(ticketCollection, ticketId) external view returns (uint256){
         uint256 currentMaxBid = _listedTickets[ticketCollection][ticketId].maxBid;
         return currentMaxBid > 0 ? currentMaxBid : _listedTickets[ticketCollection][ticketId].price;
     }
@@ -104,7 +108,7 @@ contract SecondaryMarket is ISecondaryMarket {
     function getHighestBidder(
         address ticketCollection,
         uint256 ticketId
-    ) external view returns (address){
+    ) TicketIsListed(ticketCollection, ticketId) external view returns (address){
         return _listedTickets[ticketCollection][ticketId].maxBidder;
     }
 
@@ -123,15 +127,15 @@ contract SecondaryMarket is ISecondaryMarket {
     ) OnlyTicketOwner(ticketCollection, ticketID) NonExpiredAndUnused(ticketCollection, ticketID) external{
         require(_listedTickets[ticketCollection][ticketID].maxBid != 0, "No bids have been made yet");
         TicketNFT collection = TicketNFT(ticketCollection);
+        _purchaseToken.transfer(msg.sender, _listedTickets[ticketCollection][ticketID].maxBid * 95 / 100);
+        _purchaseToken.transfer(collection.creator(), _listedTickets[ticketCollection][ticketID].maxBid * 5 / 100);
+        collection.updateHolderName(ticketID, _listedTickets[ticketCollection][ticketID].maxBidderName);
+        collection.transferFrom(address(this), _listedTickets[ticketCollection][ticketID].maxBidder, ticketID);
         emit BidAccepted(
             _listedTickets[ticketCollection][ticketID].maxBidder,
             ticketCollection, ticketID,
             _listedTickets[ticketCollection][ticketID].maxBid,
             _listedTickets[ticketCollection][ticketID].maxBidderName);
-        _purchaseToken.transfer(msg.sender, _listedTickets[ticketCollection][ticketID].maxBid * 95 / 100);
-        _purchaseToken.transfer(collection.creator(), _listedTickets[ticketCollection][ticketID].maxBid * 5 / 100);
-        collection.updateHolderName(ticketID, _listedTickets[ticketCollection][ticketID].maxBidderName);
-        collection.transferFrom(address(this), _listedTickets[ticketCollection][ticketID].maxBidder, ticketID);
         delete _listedTickets[ticketCollection][ticketID];
     }
 
@@ -139,8 +143,7 @@ contract SecondaryMarket is ISecondaryMarket {
      * listed the ticket may delist the ticket. The ticket should be transferred back
      * to msg.sender, i.e., the lister, and escrowed bid funds should be return to the bidder, if any.
      */
-    function delistTicket(address ticketCollection, uint256 ticketID) OnlyTicketOwner(ticketCollection, ticketID) external{
-        emit Delisting(ticketCollection, ticketID);
+    function delistTicket(address ticketCollection, uint256 ticketID) TicketIsListed(ticketCollection, ticketID) OnlyTicketOwner(ticketCollection, ticketID) external{
         if (_listedTickets[ticketCollection][ticketID].maxBid > 0){
             // return the escrowed amount back to the max bidder
             _purchaseToken.transfer(_listedTickets[ticketCollection][ticketID].maxBidder, _listedTickets[ticketCollection][ticketID].maxBid);
@@ -148,18 +151,24 @@ contract SecondaryMarket is ISecondaryMarket {
         TicketNFT collection = TicketNFT(ticketCollection);
         collection.transferFrom(address(this), msg.sender, ticketID);
         delete _listedTickets[ticketCollection][ticketID];
+        emit Delisting(ticketCollection, ticketID);
     }
 
     /** MY OWN METHOD, WHICH WILL BE USED IN CASES WHEN THE TICKET EXPIRES AND THE LISTER DOES NOT DELIST THE TICKET
      */
-    function returnEscrowAmount(address ticketCollection, uint256 ticketID) external {
-        require(msg.sender == _listedTickets[ticketCollection][ticketID].maxBidder, "You do not have permission to claim these funds");
+    function terminateListing(address ticketCollection, uint256 ticketID) TicketIsListed(ticketCollection, ticketID) external {
         TicketNFT collection = TicketNFT(ticketCollection);
-        if (collection.isExpiredOrUsed(ticketID)) {
-            // return the escrowed amount back to the max bidder
-            _purchaseToken.transfer(msg.sender, _listedTickets[ticketCollection][ticketID].maxBid);
-            delete _listedTickets[ticketCollection][ticketID];
-        }
-    }
+        require(collection.isExpiredOrUsed(ticketID) == true, "The ticket has not expired/been used");
+        require(
+            msg.sender == _listedTickets[ticketCollection][ticketID].maxBidder ||
+                msg.sender == address(this),
+            "You do not have permission to perform this action");
 
+        collection.transferFrom(address(this), _listedTickets[ticketCollection][ticketID].owner, ticketID);
+        // return the escrowed amount back to the max bidder, if there is one
+        if (_listedTickets[ticketCollection][ticketID].maxBidder != address(0)) {
+            _purchaseToken.transfer(_listedTickets[ticketCollection][ticketID].maxBidder, _listedTickets[ticketCollection][ticketID].maxBid);
+        }
+        delete _listedTickets[ticketCollection][ticketID];
+    }
 }
