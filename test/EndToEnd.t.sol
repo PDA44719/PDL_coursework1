@@ -4,38 +4,10 @@ pragma solidity ^0.8.10;
 import "forge-std/Test.sol";
 import "../src/contracts/PurchaseToken.sol";
 import "../src/interfaces/ITicketNFT.sol";
-import "../src/interfaces/IPrimaryMarket.sol";
 import "../src/contracts/PrimaryMarket.sol";
-import "../src/contracts/TicketNFT.sol";
 import "../src/contracts/SecondaryMarket.sol";
 
 contract EndToEnd is Test {
-    event EventCreated(
-        address indexed creator,
-        address indexed ticketCollection,
-        string eventName,
-        uint256 price,
-        uint256 maxNumberOfTickets
-    );
-
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-
-    event Purchase(
-        address indexed holder,
-        address indexed ticketCollection,
-        uint256 ticketId,
-        string holderName
-    );
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    event Log(uint256 amount);
-    event Print(string check);
-
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
     SecondaryMarket public secondaryMarket;

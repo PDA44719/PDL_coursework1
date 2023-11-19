@@ -4,27 +4,10 @@ pragma solidity ^0.8.10;
 import "forge-std/Test.sol";
 import "../src/contracts/PurchaseToken.sol";
 import "../src/interfaces/ITicketNFT.sol";
-import "../src/interfaces/IPrimaryMarket.sol";
 import "../src/contracts/PrimaryMarket.sol";
-import "../src/contracts/TicketNFT.sol";
 import "../src/contracts/SecondaryMarket.sol";
 
 contract TicketNFTTest is Test {
-    event EventCreated(
-        address indexed creator,
-        address indexed ticketCollection,
-        string eventName,
-        uint256 price,
-        uint256 maxNumberOfTickets
-    );
-
-    event Purchase(
-        address indexed holder,
-        address indexed ticketCollection,
-        uint256 ticketId,
-        string holderName
-    );
-
     event Approval(
         address indexed holder,
         address indexed approved,
@@ -36,9 +19,6 @@ contract TicketNFTTest is Test {
         address indexed to,
         uint256 indexed ticketID
     );
-
-    event Log(uint256 amount);
-    event Print(string check);
 
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
@@ -171,7 +151,6 @@ contract TicketNFTTest is Test {
 
     function testUpdateHolderNameFromNonHolderAddress() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
-
         // Attempt to update the holder's name from Charlie's address
         vm.prank(charlie);
         vm.expectRevert("Only the ticket holder can update the name");
@@ -180,8 +159,6 @@ contract TicketNFTTest is Test {
 
     function testSetUsedTicket() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
-        
-        // Set the ticket to used
         vm.prank(alice);
         ticketCollection.setUsed(1);
         assertEq(ticketCollection.isExpiredOrUsed(1), true);
@@ -189,20 +166,12 @@ contract TicketNFTTest is Test {
 
     function testExpiredTicket() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
-
-        // Force the ticket to expire and attempt to submit a bid for it
         skip(864000); // Skip forward block.timestamp until the ticket is expired
         assertEq(ticketCollection.isExpiredOrUsed(1), true);
-        //vm.startPrank(alice);
-        //purchaseToken.approve(address(secondaryMarket), 1e8);
-        //vm.expectRevert("The ticket has already expired/been used");
-        //secondaryMarket.submitBid(address(ticketCollection), id, 1e8, "Alice");
-        
     }
     
     function testSetUsedTicketFromNonCreatorsAccount() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
-
         // Attempt to set the ticket to used from Bob's address
         vm.prank(bob);
         vm.expectRevert("Only the collection creator can call this function");
@@ -220,7 +189,6 @@ contract TicketNFTTest is Test {
 
     function testSetUsedTicketAfterExpired() public {
         ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
-
         // Attempt to set the ticket to used after it has expired
         skip(864000); // Skip forward block.timestamp until the ticket is expired
         vm.prank(alice);

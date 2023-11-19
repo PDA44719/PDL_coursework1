@@ -4,9 +4,7 @@ pragma solidity ^0.8.10;
 import "forge-std/Test.sol";
 import "../src/contracts/PurchaseToken.sol";
 import "../src/interfaces/ITicketNFT.sol";
-import "../src/interfaces/IPrimaryMarket.sol";
 import "../src/contracts/PrimaryMarket.sol";
-import "../src/contracts/TicketNFT.sol";
 import "../src/contracts/SecondaryMarket.sol";
 
 contract PrimaryMarketTest is Test {
@@ -18,12 +16,6 @@ contract PrimaryMarketTest is Test {
         uint256 maxNumberOfTickets
     );
 
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-
     event Purchase(
         address indexed holder,
         address indexed ticketCollection,
@@ -31,10 +23,13 @@ contract PrimaryMarketTest is Test {
         string holderName
     );
 
-    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
 
-    event Log(uint256 amount);
-    event Print(string check);
+    event Transfer(address indexed from, address indexed to, uint256 value);
 
     PrimaryMarket public primaryMarket;
     PurchaseToken public purchaseToken;
@@ -56,7 +51,8 @@ contract PrimaryMarketTest is Test {
     function testCreateNewCollection() public {
         vm.prank(alice);
         /* Check all emit fields except the address of ticketCollection, as
-           it is not known until its creation */
+           it is not known until its creation
+        */
         vm.expectEmit(true, false, false, true);
         emit EventCreated(alice, address(0), "sampleEvent", 1e5, 30);
         ITicketNFT ticketCollection = primaryMarket.createNewEvent(

@@ -4,9 +4,7 @@ pragma solidity ^0.8.10;
 import "forge-std/Test.sol";
 import "../src/contracts/PurchaseToken.sol";
 import "../src/interfaces/ITicketNFT.sol";
-import "../src/interfaces/IPrimaryMarket.sol";
 import "../src/contracts/PrimaryMarket.sol";
-import "../src/contracts/TicketNFT.sol";
 import "../src/contracts/SecondaryMarket.sol";
 
 contract SecondaryMarketTest is Test {
