@@ -228,6 +228,7 @@ contract SecondaryMarketTest is Test {
         assertEq(ticketCollection.holderOf(1), charlie);
         assertEq(ticketCollection.balanceOf(bob), 0);
         assertEq(ticketCollection.holderNameOf(1), "Charles");
+        // Make sure that bob has received the bid amount (minus the 5% fee)
         assertEq(purchaseToken.balanceOf(bob), previousBobTokens  + 1e9*95/100);
         assertEq(purchaseToken.balanceOf(charlie), 0); 
     }
@@ -258,7 +259,7 @@ contract SecondaryMarketTest is Test {
         vm.stopPrank();
     }
 
-    function testTerminateListing() public {
+    function testSuccessfulTerminateListing() public {
         ITicketNFT ticketCollection = _listTicketAfterCreation();
         // Submit a bid for the ticket
         vm.startPrank(charlie);
@@ -275,10 +276,32 @@ contract SecondaryMarketTest is Test {
         vm.prank(address(secondaryMarket));
         secondaryMarket.terminateListing(address(ticketCollection), 1);
 
-        // Ensure the ticket was returned to the owner and the money
+        // Ensure the ticket was returned to the owner and the bid amount to charlie
         assertEq(ticketCollection.balanceOf(address(secondaryMarket)), 0);
         assertEq(ticketCollection.balanceOf(bob), 1);
         assertEq(purchaseToken.balanceOf(address(secondaryMarket)), 0);
         assertEq(purchaseToken.balanceOf(charlie), 1e8);
+    }
+
+    function testTerminateListingFromAccountWithoutPermission() public {
+        ITicketNFT ticketCollection = _listTicketAfterCreation();
+        skip(864000); 
+        vm.prank(alice); // Not the max bidder nor the secondary market
+        vm.expectRevert("You do not have permission to perform this action");
+        secondaryMarket.terminateListing(address(ticketCollection), 1);
+    }
+
+    function testTerminateNonExpiredListing() public {
+        ITicketNFT ticketCollection = _listTicketAfterCreation();
+        // Submit a bid for the ticket
+        vm.startPrank(charlie);
+        purchaseToken.mint{value: 1e6}(); 
+        purchaseToken.approve(address(secondaryMarket), 1e8);
+        secondaryMarket.submitBid(address(ticketCollection), 1, 1e8, "Charles");
+
+        // Try to retrieve the escrowed amount while the ticket has not expired/been used
+        vm.expectRevert("The ticket has not expired/been used");
+        secondaryMarket.terminateListing(address(ticketCollection), 1);
+        vm.stopPrank();
     }
 }
