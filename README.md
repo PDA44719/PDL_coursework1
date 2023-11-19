@@ -18,6 +18,8 @@ There are a total of 35 tests. In order to run the tests, it is recommended that
 The command to run the tests is: 
 ```forge test --mc [NameOfTheTest] -vvv```. The 4 tests that can be run are: ```TicketNFTTest```, ```PrimaryMarketTest```, ```SecondaryMarketTest``` and ```EndToEnd```. 
 
+As proof of all of my tests passing, I have provided screenshots in the [results directory](./results). Please refer to those, should there be any issues when executing my code on your device.
+
 ## Additional Functionality
 As somebody mentioned in Scientia, there was a potential problem in the Seconday Market: If a listed ticket expires and the lister does not call ```delistTicket```, then the max bid amount (which is held in by the Seconday Market) cannot be retrieved by the bidder.
 
