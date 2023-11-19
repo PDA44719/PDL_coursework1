@@ -39,7 +39,7 @@ contract TicketNFTTest is Test {
 
     function _createCollectionAndMintOneTicket() private returns(ITicketNFT) {
         vm.prank(alice);
-        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+        ITicketNFT collection = primaryMarket.createNewEvent(
             "sampleEvent",
             1e5,
             30
@@ -48,17 +48,17 @@ contract TicketNFTTest is Test {
         purchaseToken.mint{value: 1e3}(); 
         purchaseToken.approve(address(primaryMarket), 1e5);
         primaryMarket.purchase(
-            address(ticketCollection),
+            address(collection),
             "Robert"
         );
         vm.stopPrank();
-        return ticketCollection;
+        return collection;
     }
 
     function testNonExistentTicket() public {
         // Create the collection
         vm.prank(alice);
-        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+        ITicketNFT collection = primaryMarket.createNewEvent(
             "sampleEvent",
             1e5,
             30
@@ -67,13 +67,13 @@ contract TicketNFTTest is Test {
         /* Attempt to get the holder of ticket number 1 (which does not exist).
            This will test the TicketExists modifier in 'TicketNFT.sol' */
         vm.expectRevert("Invalid ticket ID");
-        ticketCollection.holderOf(1);
+        collection.holderOf(1);
     }
 
     function testMintingFromOutsidePrimaryMarket() public {
         // Create the collection
         vm.prank(alice);
-        ITicketNFT ticketCollection = primaryMarket.createNewEvent(
+        ITicketNFT collection = primaryMarket.createNewEvent(
             "sampleEvent",
             1e5,
             30
@@ -82,17 +82,17 @@ contract TicketNFTTest is Test {
         // Attempt to mint directly from Bob's address
         vm.prank(bob);
         vm.expectRevert("Only the primary Market can mint tickets");
-        ticketCollection.mint(bob, "Robert");
+        collection.mint(bob, "Robert");
     }
 
     function testSuccesfulTicketTransfer() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
 
         // Approve Charlie to be able to transfer ticket 1
         vm.prank(bob);
         vm.expectEmit(true, true, true, false);
         emit Approval(bob, charlie, 1);
-        ticketCollection.approve(charlie, 1);
+        collection.approve(charlie, 1);
 
         // Transfer ticket to Charlie
         vm.startPrank(charlie);
@@ -100,99 +100,99 @@ contract TicketNFTTest is Test {
         emit Transfer(bob, charlie, 1);
         vm.expectEmit(true, true, true, false);
         emit Approval(charlie, address(0), 1);
-        ticketCollection.transferFrom(bob, charlie, 1);
-        ticketCollection.updateHolderName(1, "Charles");
+        collection.transferFrom(bob, charlie, 1);
+        collection.updateHolderName(1, "Charles");
 
-        assertEq(ticketCollection.balanceOf(charlie), 1);
-        assertEq(ticketCollection.balanceOf(bob), 0);
-        assertEq(ticketCollection.holderOf(1), charlie);
-        assertEq(ticketCollection.holderNameOf(1), "Charles");
-        assertEq(ticketCollection.getApproved(1), address(0)); 
+        assertEq(collection.balanceOf(charlie), 1);
+        assertEq(collection.balanceOf(bob), 0);
+        assertEq(collection.holderOf(1), charlie);
+        assertEq(collection.holderNameOf(1), "Charles");
+        assertEq(collection.getApproved(1), address(0)); 
     }
 
     function testTransferTicketWithoutApproval() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
 
         // Attempt to transfer the ticket to Charlie without permission
         vm.prank(charlie);
         vm.expectRevert("Permission error: Ticket could not be transferred");
-        ticketCollection.transferFrom(bob, charlie, 1);
+        collection.transferFrom(bob, charlie, 1);
     }
 
     function testApproveTransferOfTicketOwnedByThirdParty() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
 
         // Attempt to approve the ticket's transfer from Charlie's address
         vm.prank(charlie);
         vm.expectRevert("You do not own that ticket");
-        ticketCollection.approve(charlie, 1);
+        collection.approve(charlie, 1);
     }
     
     function testZeroAdressTransfer() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
 
         // Attempt to transfer the ticket to the zero address
         vm.startPrank(bob);
         vm.expectRevert("'to' address cannot be the zero address");
-        ticketCollection.transferFrom(bob, address(0), 1);
+        collection.transferFrom(bob, address(0), 1);
 
         // Attempt to transfer the ticket from the zero address
         vm.expectRevert("'from' address cannot be the zero address");
-        ticketCollection.transferFrom(address(0), alice, 1);
+        collection.transferFrom(address(0), alice, 1);
         vm.stopPrank();
     }
 
     function testUpdateHolderName() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
         vm.prank(bob);
-        ticketCollection.updateHolderName(1, "Bobby");
-        assertEq(ticketCollection.holderNameOf(1), "Bobby");
+        collection.updateHolderName(1, "Bobby");
+        assertEq(collection.holderNameOf(1), "Bobby");
     }
 
     function testUpdateHolderNameFromNonHolderAddress() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
         // Attempt to update the holder's name from Charlie's address
         vm.prank(charlie);
         vm.expectRevert("Only the ticket holder can update the name");
-        ticketCollection.updateHolderName(1, "Charlie");
+        collection.updateHolderName(1, "Charlie");
     }
 
     function testSetUsedTicket() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
         vm.prank(alice);
-        ticketCollection.setUsed(1);
-        assertEq(ticketCollection.isExpiredOrUsed(1), true);
+        collection.setUsed(1);
+        assertEq(collection.isExpiredOrUsed(1), true);
     }
 
     function testExpiredTicket() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
         skip(864000); // Skip forward block.timestamp until the ticket is expired
-        assertEq(ticketCollection.isExpiredOrUsed(1), true);
+        assertEq(collection.isExpiredOrUsed(1), true);
     }
     
     function testSetUsedTicketFromNonCreatorsAccount() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
         // Attempt to set the ticket to used from Bob's address
         vm.prank(bob);
         vm.expectRevert("Only the collection creator can call this function");
-        ticketCollection.setUsed(1);
+        collection.setUsed(1);
     }
 
     function testSetUsedTicketTwice() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
         vm.startPrank(alice);
-        ticketCollection.setUsed(1);
+        collection.setUsed(1);
         vm.expectRevert("The ticket had already been used");
-        ticketCollection.setUsed(1);
+        collection.setUsed(1);
         vm.stopPrank();
     }
 
     function testSetUsedTicketAfterExpired() public {
-        ITicketNFT ticketCollection = _createCollectionAndMintOneTicket();
+        ITicketNFT collection = _createCollectionAndMintOneTicket();
         // Attempt to set the ticket to used after it has expired
         skip(864000); // Skip forward block.timestamp until the ticket is expired
         vm.prank(alice);
         vm.expectRevert("The ticket has already expired");
-        ticketCollection.setUsed(1);
+        collection.setUsed(1);
     }
 }
