@@ -16,7 +16,7 @@ The two main goal of each of the test files are:
 There are a total of 35 tests. In order to run the tests, it is recommended that they are run separately, as it will provide a clearer overview of the different functionalities being tested for each smart contract.
 
 The command to run the tests is: 
-```forge test --mc [NameOfTheTest] -vvv```. The 4 test contracts that can be executed are: ```TicketNFTTest```, ```PrimaryMarketTest```, ```SecondaryMarketTest``` and ```EndToEnd```. 
+```forge test --mc [NameOfTheTestContract] -vvv```. The 4 test contracts that can be executed are: ```TicketNFTTest```, ```PrimaryMarketTest```, ```SecondaryMarketTest``` and ```EndToEnd```. 
 
 As proof of all of my tests passing, I have provided screenshots in the [results directory](./results). Please refer to those, should there be any issues when executing my code on your device.
 
